@@ -1,0 +1,108 @@
+--4:
+
+CREATE DATABASE hotels;
+
+CREATE TABLE rooms(
+room_ID int IDENTITY (1,1)PRIMARY KEY NOT NULL ,
+room_number int NOT NULL ,
+room_type varchar(50) NOT NULL ,
+price_per_night int NOT NULL ,
+max_persons int,
+active varchar(50)
+);
+
+
+CREATE TABLE guests(
+guest_ID int IDENTITY(1,1)PRIMARY KEY NOT NULL ,
+first_name varchar(255) NOT NULL,
+last_name varchar(255) NOT NULL,
+email varchar(255) NOT NULL,
+phone varchar(255)
+);
+
+CREATE TABLE bookings(
+booking_ID int IDENTITY(1,1) NOT NULL,
+arrival datetime NOT NULL ,
+checkout datetime NOT NULL ,
+room_ID int,
+guest_ID int,
+PRIMARY KEY (booking_ID),
+FOREIGN KEY(room_ID) REFERENCES rooms(room_ID),
+FOREIGN KEY(guest_ID) REFERENCES guests(guest_ID)
+);
+
+--a:
+ALTER TABLE rooms
+ADD CHECK (room_type = 'Single' OR room_type='Double' OR room_type='Family');
+
+--b:
+ALTER TABLE bookings
+ADD CHECK (arrival>= getdate()  AND checkout>= getdate());
+
+--c:
+CREATE FUNCTION ValidateGuest
+(
+    @guestId int,
+    @dateFrom date,
+    @dateTo date
+)
+RETURNS BIT
+AS
+BEGIN
+    DECLARE @Valid bit = 1;
+
+    IF (    (SELECT count(1)
+                  FROM   Bookings b
+                  WHERE  b.guest_ID = @guestId
+                  AND    @dateFrom < b.checkout AND b.arrival < @dateTo) > 1 )
+       SET @Valid = 0;
+
+    RETURN @Valid;
+END
+
+ALTER TABLE Bookings WITH NOCHECK ADD CONSTRAINT CK_DoubleBookings
+    check (dbo.ValidateGuest (guest_ID, arrival, checkout) = 1);
+
+--Populate tables:
+INSERT INTO rooms VALUES ('10', 'Single', '30', '1', 'free')
+INSERT INTO rooms VALUES ('15', 'Single', '30', '1', 'free')
+INSERT INTO rooms VALUES ('20', 'Single', '30', '1', 'inUse')
+INSERT INTO rooms VALUES ('25', 'Double', '60', '2', 'free')
+INSERT INTO rooms VALUES ('30', 'Double', '60', '2', 'free')
+INSERT INTO rooms VALUES ('35', 'Double', '60', '2', 'inUse')
+INSERT INTO rooms VALUES ('40', 'Double', '60', '2', 'free')
+INSERT INTO rooms VALUES ('45', 'Family', '100', '5', 'inUse')
+INSERT INTO rooms VALUES ('50', 'Family', '100', '5', 'free')
+INSERT INTO rooms VALUES ('55', 'Family', '100', '5', 'free')
+
+
+INSERT INTO guests VALUES ('Sten', 'Paaro', 'sten@mail.com', '+45-315-553-54')
+INSERT INTO guests VALUES ('Mad', 'Max', 'max@mail.com', '+45-305-559-59')
+INSERT INTO guests VALUES ('Dwight', 'House', 'dwight@mail.com', '+45-715-552-53')
+INSERT INTO guests VALUES ('Lil', 'Peep', 'peep@mail.com', '+45-615-557-70')
+INSERT INTO guests VALUES ('Maria', 'Miller', 'maria@mail.com', '+45-255-519-47')
+INSERT INTO guests VALUES ('Alex', 'Smith', 'alex@mail.com', '+45-615-557-28')
+INSERT INTO guests VALUES ('Bella', 'Sky', 'bella@mail.com', '+45-715-553-70')
+INSERT INTO guests VALUES ('Hanna', 'Gold', 'hanna@mail.com', '+45-725-445-99')
+
+INSERT INTO bookings VALUES ('2019-03-27 14:27:0', '2019-03-29 12:0:0', '5', '5' )
+INSERT INTO bookings VALUES ('2019-08-01 14:0:0', '2019-08-10 12:0:0', '2', '2' )
+INSERT INTO bookings VALUES ('2019-04-03 14:0:0', '2019-04-14 12:0:0', '1', '1' )
+INSERT INTO bookings VALUES ('2019-05-03 14:0:0', '2019-05-14 12:0:0', '3', '3' )
+INSERT INTO bookings VALUES ('2019-07-03 14:0:0', '2019-07-14 12:0:0', '4', '4' )
+INSERT INTO bookings VALUES ('2019-08-03 14:0:0', '2019-08-14 12:0:0', '5', '5' )
+INSERT INTO bookings VALUES ('2019-09-03 14:0:0', '2019-09-14 12:0:0', '6', '6' )
+INSERT INTO bookings VALUES ('2019-08-03 14:0:0', '2019-08-14 12:0:0', '7', '7' )
+
+--d:
+SELECT guest_ID FROM bookings WHERE arrival <= GETDATE() AND checkout >= GETDATE();
+
+--e:
+CREATE VIEW roomPopular(room_type, booking_ID)
+  AS
+  SELECT room_type, COUNT(*) FROM bookings JOIN rooms r on bookings.room_ID = r.room_ID
+  GROUP BY r.room_type
+
+SELECT room_type FROM roomPopular WHERE booking_ID=(SELECT MAX(booking_ID) FROM roomPopular);
+
+
