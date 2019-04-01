@@ -74,7 +74,19 @@ SELECT COUNT(DISTINCT guest_ID) FROM bookings
   WHERE (arrival <='2019-08-01' AND checkout>='2019-08-01') OR(arrival>='2019-08-01'AND arrival<='2019-08-31');
 
 --f:
+CREATE PROCEDURE increase_prices
+AS
+UPDATE rooms
+   SET price_per_night =  price_per_night + price_per_night * 0.05
+   WHERE Type = 'Single'
 
+UPDATE rooms
+   SET price_per_night = price_per_night + price_per_night * 0.075
+   WHERE Type = 'Double'
+
+UPDATE rooms
+   SET price_per_night = price_per_night - price_per_night * 0.03
+   WHERE Type = 'Apartment'
 
 --Populate tables:
 INSERT INTO rooms VALUES ('10', 'Single', '30', '1', 'free')
