@@ -78,15 +78,16 @@ CREATE PROCEDURE increase_prices
 AS
 UPDATE rooms
    SET price_per_night =  price_per_night + price_per_night * 0.05
-   WHERE Type = 'Single'
+   WHERE room_type = 'Single'
 
 UPDATE rooms
    SET price_per_night = price_per_night + price_per_night * 0.075
-   WHERE Type = 'Double'
+   WHERE room_type = 'Double'
 
 UPDATE rooms
    SET price_per_night = price_per_night - price_per_night * 0.03
-   WHERE Type = 'Apartment'
+   WHERE room_type = 'Apartment'
+
 
 --Populate tables:
 INSERT INTO rooms VALUES ('10', 'Single', '30', '1', 'free')
